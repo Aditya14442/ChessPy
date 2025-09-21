@@ -15,8 +15,9 @@ class Game:
 
     # input format is ['a1','b2'] where a1 is the square from which the piece will be moved and b2 is the square to which square the piece will be moved
     def move(self,move,forced=False):
-        From, To = self.decodeMove(move)
         promotion = (move[2] if len(move)>2 else 'Q')
+        move=move[:2]
+        From, To = self.decodeMove(move)
         if(self.board[From[0]][From[1]] == '*'):
             raise Exception("The square is empty")
 
@@ -37,7 +38,7 @@ class Game:
         elif self.board[From[0]][From[1]].islower() and self.board.turn != 'b':
             raise Exception("Not your turn")
         
-        possibleMoves = self.PossibleMoves(From)
+        possibleMoves = [i[:2] for i in self.PossibleMoves(From)]
         if list(To) in possibleMoves:
             #Handling special cases of Pawns (En passant, Promotion)
             self.board.enPassant = '-'
@@ -101,12 +102,24 @@ class Game:
         return None
 
     def isStaleMate(self):
+        staleMateCombinations = [
+            {'K','k'},
+            {'K','k','B'},
+            {'K','k','b'},
+            {'K','k','N'},
+            {'K','k','n'}
+        ]
+        allPieces=self.allPieces('w')+self.allPieces('b')
+        allPieces=self.squareToPiece(allPieces)
         for turn in ['w','b']:
             if self.board.halfMoves>=100:
                 self.IsStaleMate[turn]=True
                 continue
-            if  [i.split(" ")[0] for i in self.history].count(self.board.fen().split(" ")[0]) >2:
+            elif  [i.split(" ")[0] for i in self.history].count(self.board.fen().split(" ")[0]) >2:
                 self.IsStaleMate[turn] = True
+                continue
+            elif len(allPieces)<=3 and set(allPieces) in staleMateCombinations:
+                self.IsStaleMate[turn]=True
                 continue
             self.IsStaleMate[turn] = None
             for i in self.allPieces(turn):
@@ -193,13 +206,25 @@ class Game:
         row, col = piece
         if self.board[row][col] == 'P':
             if self.board[row - 1][col] == '*':
-                moves.append([row - 1, col])
+                if row==1:
+                    for i in ["Q","R","N","B"]:
+                        moves.append([row-1,col,i])
+                else:
+                    moves.append([row - 1, col])
             if row == 6 and self.board[row - 1][col] == '*' and self.board[row - 2][col] == '*':
                 moves.append([row - 2, col])
             if col != 7 and self.board[row - 1][col + 1].islower():
-                moves.append([row - 1, col + 1])
+                if row==1:
+                    for i in ["Q","R","N","B"]:
+                        moves.append([row-1,col+1,i])
+                else:
+                    moves.append([row - 1, col + 1])
             if col != 0 and self.board[row - 1][col - 1].islower():
-                moves.append([row - 1, col - 1])
+                if row==1:
+                    for i in ["Q","R","N","B"]:
+                        moves.append([row-1,col-1,i])
+                else:
+                    moves.append([row - 1, col - 1])
             # For en passant
             if col != 7 and row == 3 and self.board[row][col + 1] == 'p' and not self.board[row - 1][col + 1].isupper() and self.encodePosition([row-1,col+1])==self.board.enPassant:
                 moves.append([row - 1, col + 1])
@@ -209,13 +234,25 @@ class Game:
             return self.possibleMoves[pieceEncoded]
         if self.board[row][col] == 'p':
             if self.board[row + 1][col] == '*':
-                moves.append([row + 1, col])
+                if row==6:
+                    for i in ["q","r","n","b"]:
+                        moves.append([row+1,col,i])
+                else:
+                    moves.append([row + 1, col])
             if row == 1 and self.board[row + 1][col] == '*' and self.board[row + 2][col] == '*':
                 moves.append([row + 2, col])
             if col != 7 and self.board[row + 1][col + 1].isupper():
-                moves.append([row + 1, col + 1])
+                if row==6:
+                    for i in ["q","r","n","b"]:
+                        moves.append([row+1,col+1,i])
+                else:
+                    moves.append([row + 1, col + 1])
             if col != 0 and self.board[row + 1][col - 1].isupper():
-                moves.append([row + 1, col - 1])
+                if row==6:
+                    for i in ["q","r","n","b"]:
+                        moves.append([row+1,col-1,i])
+                else:
+                    moves.append([row + 1, col - 1])
             # For en passant
             if col != 7 and row == 4 and self.board[row][col + 1] == 'P' and not self.board[row + 1][col + 1].islower() and self.encodePosition([row+1,col+1])==self.board.enPassant:
                 moves.append([row + 1, col + 1])
