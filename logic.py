@@ -60,11 +60,33 @@ class Game:
                     self.board.castle['q'] = False
                 if abs(To[1]-From[1])>1:
                     if(To[1]==2):
-                        self.board[To[0]][3] = self.board[To[0]][0]
-                        self.board[To[0]][0] = '*'
+                        testGame = Game(self.board.fen())
+                        if self.board.turn=='w':
+                            testGame.move([testGame.encodePosition([7,4]),testGame.encodePosition( [7,3] )], forced=True)
+                            if(testGame.isChecked()[self.board.turn]):
+                                raise Exception("Castling passes through check!")
+                            self.board[To[0]][3] = self.board[To[0]][0]
+                            self.board[To[0]][0] = '*'
+                        elif self.board.turn=='b':
+                            testGame.move([testGame.encodePosition([0,4]),testGame.encodePosition( [0,3] )], forced=True)
+                            if(testGame.isChecked()[self.board.turn]):
+                                raise Exception("Castling passes through check!")
+                            self.board[To[0]][3] = self.board[To[0]][0]
+                            self.board[To[0]][0] = '*'
                     elif(To[1]==6):
-                        self.board[To[0]][5] = self.board[To[0]][7]
-                        self.board[To[0]][7] = '*'
+                        testGame = Game(self.board.fen())
+                        if self.board.turn=='w':
+                            testGame.move([testGame.encodePosition([7,4]),testGame.encodePosition( [7,5] )], forced=True)
+                            if(testGame.isChecked()[self.board.turn]):
+                                raise Exception("Castling passes through check!")
+                            self.board[To[0]][5] = self.board[To[0]][7]
+                            self.board[To[0]][7] = '*'
+                        elif self.board.turn=='b':
+                            testGame.move([testGame.encodePosition([0,4]),testGame.encodePosition( [0,5] )], forced=True)
+                            if(testGame.isChecked()[self.board.turn]):
+                                raise Exception("Castling passes through check!")
+                            self.board[To[0]][5] = self.board[To[0]][7]
+                            self.board[To[0]][7] = '*'
             #Disabling Castle on Rook Move
             elif self.board[From[0]][From[1]] in ['R','r']:
                 self.board.castle['K'] = False if From == (7,7) else self.board.castle['K']
@@ -445,3 +467,12 @@ class Game:
                 if self.board[rank][file].islower() and colour == 'b':
                     squares.append([rank, file])
         return squares
+    
+    def __str__(self):
+        string = str(self.board)
+        string+=f"\nMove: {'White' if self.board.turn=='w' else 'Black'}"
+        string+=f"\nMove Number : {self.board.fullMoves}"
+        string+=f"\nCastling Rights : {self.board.castle}"
+        string+=f"\nMoves till last capture or pawn move : {self.board.halfMoves}"
+        string+=f"\nEn passant available : {self.board.enPassant}"
+        return string
